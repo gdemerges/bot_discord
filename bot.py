@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
 import random
 import aiohttp
 import json
@@ -16,7 +16,7 @@ user_groups = [
     [294065690162364416, 509295845762400256, 998493093651296296, 428391859853852684],
     [708311679838060555, 1188435883947462656, 148188913817616384, 1043293367368425503]
 ]
-current_group_index = 1
+current_group_index = 0
 
 if not hasattr(bot, 'mention_users_group_started'):
     bot.mention_users_group_started = False
@@ -28,7 +28,7 @@ async def on_ready():
         mention_users_group.start()
         bot.mention_users_group_started = True
         check_for_alerts.start()
-
+        message_vendredi.start()
 
 fin_messages = [
     "de manger un riche",
@@ -57,7 +57,7 @@ async def alternance(ctx):
     delta = debut_alternance - maintenant
     jours = delta.days
     heures, reste = divmod(delta.seconds, 3600)
-    minutes, secondes = divmod(reste, 60)  # Correction ici
+    minutes, secondes = divmod(reste, 60)
     message = f"Il reste {jours} jours, {heures} heures, {minutes} minutes et {secondes} secondes avant le début de l'alternance."
     await ctx.send(message)
 
@@ -73,11 +73,18 @@ async def reveil(ctx):
     message = f'<@{special_user_id}>, réveille toi !!'
     await ctx.send(message)
 
+jeudis_exclus = [
+    date(2024, 5, 9),
+    date(2024, 8, 15),
+    date(2024, 8, 22),
+]
+
 @tasks.loop(minutes=30)
 async def mention_users_group():
     global current_group_index
     now = datetime.now()
-    if now.weekday() == 3:
+    today = datetime.now()
+    if now.weekday() == 3 and today.date() not in jeudis_exclus:
         channel = bot.get_channel(1200438507315920918)
         if channel:
             if now.time() >= time(16, 30) and now.time() < time(16, 40):
