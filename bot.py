@@ -31,22 +31,27 @@ async def on_ready():
         message_vendredi.start()
 
 fin_messages = [
-    "de manger un riche",
+    "de léchez votre partenaire, pas les vitrines",
     "de crâmer une banque",
+    "de composter des riches",
     "de décapiter macron",
-    "d'envoyer Djessim faire le ménage à Grenoble",
+    "de manger un riche",
     "de dégager ce sale facho et violeur de Darmanin",
-    "de léchez votre partenaire, pas les vitrines"
 ]
 
-@tasks.loop(minutes=30)
+messages_disponibles = fin_messages.copy()
+
+@tasks.loop(minutes=10)
 async def message_vendredi():
     now = datetime.now()
-    if now.weekday() == 4 and now.hour == 17:
+    if now.weekday() == 4 and now.time() >= time(16, 50) and now.time() < time(17, 00):
         channel = bot.get_channel(1200438507315920918)
         if channel:
+            if not messages_disponibles:
+                messages_disponibles.extend(fin_messages)
             message_debut = "Bon WE à tous.tes ! Et n'oubliez pas, le meilleur écogeste est "
-            message_fin = random.choice(fin_messages)
+            message_fin = random.choice(messages_disponibles)
+            messages_disponibles.remove(message_fin)
             await channel.send(message_debut + message_fin)
 
 
@@ -79,7 +84,7 @@ jeudis_exclus = [
     date(2024, 8, 22),
 ]
 
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=10)
 async def mention_users_group():
     global current_group_index
     now = datetime.now()
