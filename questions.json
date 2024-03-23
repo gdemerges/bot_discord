@@ -1,0 +1,67 @@
+[
+  {
+    "question": "Quelle fonction est utilisée pour imprimer quelque chose en Python?",
+    "choices": ["print()", "echo()", "printf()", "println()"],
+    "answer": "print()"
+  },
+  {
+    "question": "Comment créer une liste vide en Python?",
+    "choices": ["[]", "{}", "()", "list()"],
+    "answer": "[]"
+  },
+  {
+    "question": "Quel mot-clé est utilisé pour définir une fonction en Python?",
+    "choices": ["func", "def", "function", "lambda"],
+    "answer": "def"
+  },
+  {
+    "question": "Quel type de données est utilisé pour stocker une séquence de caractères en Python?",
+    "choices": [
+      "String",
+      "List",
+      "Tuple",
+      "Dictionary"
+    ],
+    "answer": "String"
+  },
+  {
+    "question": "Comment commencer un commentaire en Python?",
+    "choices": [
+      "//",
+      "/* */",
+      "#",
+      "<!-- -->"
+    ],
+    "answer": "#"
+  },
+  {
+    "question": "Quelle fonction est utilisée pour obtenir la longueur d'une liste en Python?",
+    "choices": [
+      "len()",
+      "length()",
+      "sizeof()",
+      "count()"
+    ],
+    "answer": "len()"
+  },
+  {
+    "question": "Quel mot-clé est utilisé pour créer une boucle en Python qui est exécutée tant qu'une condition est vraie?",
+    "choices": [
+      "for",
+      "while",
+      "loop",
+      "do-while"
+    ],
+    "answer": "while"
+  },
+  {
+    "question": "Quelle syntaxe est correcte pour définir une fonction en Python?",
+    "choices": [
+      "function maFonction():",
+      "def maFonction():",
+      "create maFonction():",
+      "function: maFonction()"
+    ],
+    "answer": "def maFonction():"
+  }
+]

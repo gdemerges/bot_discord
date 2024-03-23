@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, time, date
 import random
 import aiohttp
 import json
+import asyncio
 
 intents = discord.Intents.default()
 intents.members = True
@@ -29,6 +30,38 @@ async def on_ready():
         bot.mention_users_group_started = True
         check_for_alerts.start()
         message_vendredi.start()
+
+with open('questions.json', 'r') as f:
+    questions = json.load(f)
+
+@bot.command(name='quizz')
+async def quizz(ctx):
+    question = random.choice(questions)
+    choices = '\n'.join(question['choices'])
+    await ctx.send(f"{question['question']}\n{choices}")
+
+    answers = {}
+
+    def check(m):
+        return m.channel == ctx.channel and m.content.lower() in [choice.lower() for choice in question['choices']]
+
+    end_time = datetime.now() + timedelta(seconds=30)
+
+    while datetime.now() < end_time:
+        try:
+            msg = await bot.wait_for('message', check=check, timeout=(end_time - datetime.now()).total_seconds())
+            if msg:
+                answers[msg.author] = msg.content
+        except asyncio.TimeoutError:
+            break
+
+    correct_answers = [author.mention for author, answer in answers.items() if answer.lower() == question['answer'].lower()]
+
+    if correct_answers:
+        await ctx.send(f"Les utilisateurs suivants ont répondu correctement: {', '.join(correct_answers)} 🎉")
+    else:
+        await ctx.send(f"Personne n'a trouvé la bonne réponse. La bonne réponse était : {question['answer']}")
+
 
 fin_messages = [
     "de léchez votre partenaire, pas les vitrines",
