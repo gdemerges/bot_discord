@@ -63,6 +63,22 @@ async def quizz(ctx):
     else:
         await ctx.send(f"Personne n'a trouvé la bonne réponse. La bonne réponse était : {question['answer']}")
 
+@bot.command(name='alternance')
+async def alternance(ctx):
+    maintenant = datetime.now()
+    debut_alternance = datetime(2024, 9, 23)
+    delta = debut_alternance - maintenant
+    jours = delta.days
+    heures, reste = divmod(delta.seconds, 3600)
+    minutes, secondes = divmod(reste, 60)
+    message = f"Il reste {jours} jours, {heures} heures, {minutes} minutes et {secondes} secondes avant le début de l'alternance."
+    await ctx.send(message)
+
+@bot.command(name='reveil')
+async def reveil(ctx):
+    special_user_id = 985859071754260510
+    message = f'<@{special_user_id}>, réveille toi !!'
+    await ctx.send(message)
 
 fin_messages = [
     "de léchez votre partenaire, pas les vitrines",
@@ -87,30 +103,6 @@ async def message_vendredi():
             message_fin = random.choice(messages_disponibles)
             messages_disponibles.remove(message_fin)
             await channel.send(message_debut + message_fin)
-
-
-@bot.command(name='alternance')
-async def alternance(ctx):
-    maintenant = datetime.now()
-    debut_alternance = datetime(2024, 9, 23)
-    delta = debut_alternance - maintenant
-    jours = delta.days
-    heures, reste = divmod(delta.seconds, 3600)
-    minutes, secondes = divmod(reste, 60)
-    message = f"Il reste {jours} jours, {heures} heures, {minutes} minutes et {secondes} secondes avant le début de l'alternance."
-    await ctx.send(message)
-
-@bot.command(name='djessim')
-async def djessim(ctx):
-    special_user_id = 985859071754260510
-    message = f'<@{special_user_id}>, tu dois aller faire le ménage à Regmind !'
-    await ctx.send(message)
-
-@bot.command(name='reveil')
-async def reveil(ctx):
-    special_user_id = 985859071754260510
-    message = f'<@{special_user_id}>, réveille toi !!'
-    await ctx.send(message)
 
 jeudis_exclus = [
     date(2024, 5, 9),
