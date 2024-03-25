@@ -82,6 +82,7 @@ async def reveil(ctx):
 
 fin_messages = [
     "de léchez votre partenaire, pas les vitrines",
+    "d'améliorer vos skills en IA mettre au chômage tout ces batards de cols blanc",
     "de crâmer une banque",
     "de composter des riches",
     "de décapiter macron",
