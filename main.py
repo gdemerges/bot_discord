@@ -5,6 +5,7 @@ import random
 import aiohttp
 import json
 import asyncio
+import csv
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -31,9 +32,58 @@ async def on_ready():
         bot.mention_users_group_started = True
         check_for_alerts.start()
         message_vendredi.start()
+        check_birthdays.start()
+
+
+birthdays = {
+    '01-30': ['1200653514276360266'],
+    '02-20': ['1088403301994860544'],
+    '03-25': ['1188435883947462656'],
+    '06-02': ['998493093651296296'],
+    '07-24': ['294065690162364416'],
+    '08-05': ['1043293367368425503'],
+    '08-11': ['428391859853852684'],
+    '08-13': ['282150973810540566'],
+    '09-13': ['509295845762400256'],
+}
+
+@tasks.loop(hours=24)
+async def check_birthdays():
+    today = datetime.now().strftime('%m-%d')
+    if today in birthdays:
+        channel = bot.get_channel(1200438507315920918)
+        for user_id in birthdays[today]:
+            await channel.send(f"Joyeux anniversaire <@{user_id}> 🎉! Nous te souhaitons une journée pleine de joie et de bonheur !")
+
+@check_birthdays.before_loop
+async def before_check_birthdays():
+    await bot.wait_until_ready()
+    now = datetime.now()
+    target_time = time(8, 0)
+    if now.time() >= target_time:
+        next_run = now + timedelta(days=1)
+    else:
+        next_run = now
+    next_run = datetime.combine(next_run.date(), target_time)
+    wait_seconds = (next_run - now).total_seconds()
+    await asyncio.sleep(wait_seconds)
 
 with open('questions.json', 'r') as f:
     questions = json.load(f)
+
+@bot.command(name='post_jobs')
+async def post_jobs(ctx):
+    channel = bot.get_channel(1200438507315920918)
+    posted_jobs = set()
+
+    with open('jobs.csv', mode='r', encoding='utf-8') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            job_url = row['link']
+            if job_url not in posted_jobs:
+                posted_jobs.add(job_url)
+                message = f"**{row['title']}**\nPlus d'infos: {job_url}"
+                await channel.send(message)
 
 @bot.command(name='quizz')
 async def quizz(ctx):
@@ -81,8 +131,9 @@ async def reveil(ctx):
     await ctx.send(message)
 
 fin_messages = [
+    "d'apprendre à coder en Python sans l'abject chatGPT",
     "de léchez votre partenaire, pas les vitrines",
-    "d'améliorer vos skills en IA mettre au chômage tout ces batards de cols blanc",
+    "d'améliorer vos skills en IA pour mettre au chômage tout ces batards de cols blanc",
     "de crâmer une banque",
     "de composter des riches",
     "de décapiter macron",
@@ -90,20 +141,24 @@ fin_messages = [
     "de dégager ce sale facho et violeur de Darmanin",
 ]
 
-messages_disponibles = fin_messages.copy()
+index_message = 0
 
 @tasks.loop(minutes=10)
 async def message_vendredi():
+    global index_dernier_message
+
     now = datetime.now()
     if now.weekday() == 4 and now.time() >= time(16, 50) and now.time() < time(17, 00):
         channel = bot.get_channel(1200438507315920918)
         if channel:
-            if not messages_disponibles:
-                messages_disponibles.extend(fin_messages)
             message_debut = "Bon WE à tous.tes ! Et n'oubliez pas, le meilleur écogeste est "
-            message_fin = random.choice(messages_disponibles)
-            messages_disponibles.remove(message_fin)
+            message_fin = fin_messages[index_message]
             await channel.send(message_debut + message_fin)
+
+            index_dernier_message += 1
+
+            if index_message >= len(fin_messages):
+                index_message = 0
 
 jeudis_exclus = [
     date(2024, 5, 9),
