@@ -174,7 +174,7 @@ async def mention_users_group():
     if now.weekday() == 3 and today.date() not in jeudis_exclus:
         channel = bot.get_channel(1200438507315920918)
         if channel:
-            if now.time() >= time(16, 30) and now.time() < time(16, 40):
+            if now.time() >= time(16, 40) and now.time() < time(16, 50):
                 mentions = " ".join([f'<@{user_id}>' for user_id in user_groups[current_group_index]])
                 await channel.send(f'Hello {mentions}, c\'est votre tour de faire le ménage cette semaine !')
                 current_group_index = (current_group_index + 1) % len(user_groups)
