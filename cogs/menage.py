@@ -26,7 +26,7 @@ class Menage(commands.Cog):
             channel = self.bot.get_channel(1200438507315920918)
             if channel and now.time() >= time(16, 30) and now.time() < time(16, 40):
                 mentions = " ".join([f'<@{user_id}>' for user_id in self.user_groups[self.current_group_index]])
-                await channel.send(f'Hello {mentions}, c\'est votre tour de faire le ménage cette semaine !')
+                await channel.send(f'Que les ombres de la négligence se dissipent et que la lumière de l\'ordre règne ! Soulevez vos armes, les balais et les chiffons, {mentions}, c\'est votre tour de faire le ménage cette semaine ! Que chaque coin et recoin soit purifié, pour que le savoir puisse fleurir en terre de connaissance immaculée.')
                 self.current_group_index = (self.current_group_index + 1) % len(self.user_groups)
 
     @mention_users_group.before_loop
