@@ -11,7 +11,7 @@ def main():
 
     for extension in ['cogs.birthdays', 'cogs.jobs', 'cogs.quizz',
                       'cogs.messages_vendredi', 'cogs.menage',
-                      'cogs.traffic_alerts', 'cogs.jobs']:
+                      'cogs.traffic_alerts', 'cogs.jobs', 'cogs.actu_pole_emploi']:
         bot.load_extension(extension)
 
     with open('data/config.json') as config_file:
