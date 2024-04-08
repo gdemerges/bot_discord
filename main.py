@@ -8,21 +8,18 @@ import asyncio
 import csv
 
 intents = discord.Intents.default()
+intents.members = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-if not hasattr(bot, 'mention_users_group_started'):
-    bot.mention_users_group_started = False
-
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} a démarré.')
-    if not bot.mention_users_group_started:
-        mention_users_group.start()
-        bot.mention_users_group_started = True
-        check_for_alerts.start()
-        message_vendredi.start()
+    mention_users_group.start()
+    check_for_alerts.start()
+    message_vendredi.start()
+    check_birthdays.start()
 
 birthdays = {
     '01-30': ['1200653514276360266'],
@@ -40,27 +37,38 @@ birthdays = {
 async def check_birthdays():
     today = datetime.now().strftime('%m-%d')
     if today in birthdays:
-        channel = bot.get_channel(1200438507315920918)
+        channel = await bot.fetch_channel(1200438507315920918)
         for entry in birthdays[today]:
-            user_id = entry['user_id']
-            message = entry.get('message', f"En ce jour marqué par les étoiles, ô <@{user_id}>, nous célébrons l'anniversaire de ton arrivée dans ce monde de lumière et d'ombres. Que les festivités résonnent dans les confins les plus reculés de notre royaume, annonçant une journée baignée de joie et d'allégresse. Nous, tes fidèles, t'offrons nos vœux les plus sincères pour une existence éternellement ensoleillée par le bonheur. Que le souffle de la vie t'embrase d'une flamme éternelle ! 🎉")
+            if isinstance(entry, str):
+                message = f"En ce jour marqué par les étoiles, ô <@{user_id}>, nous célébrons l'anniversaire de ton arrivée dans ce monde de lumière et d'ombres. Que les festivités résonnent dans les confins les plus reculés de notre royaume, annonçant une journée baignée de joie et d'allégresse. Nous, tes fidèles, t'offrons nos vœux les plus sincères pour une existence éternellement ensoleillée par le bonheur. Que le souffle de la vie t'embrase d'une flamme éternelle ! 🎉")
+            else :
+                user_id = entry['user_id']
+                custom_message = entry['message']
+                message = f"<@{user_id}> {custom_message}"
             await channel.send(message)
 
 @check_birthdays.before_loop
 async def before_check_birthdays():
     await bot.wait_until_ready()
+    await wait_until_target_time(time(8, 0))
+
+async def wait_until_target_time(target_time):
     now = datetime.now()
-    target_time = time(8, 0)
-    if now.time() >= target_time:
+    current_time = now.time()
+    if current_time >= target_time:
         next_run = now + timedelta(days=1)
     else:
         next_run = now
     next_run = datetime.combine(next_run.date(), target_time)
-    wait_seconds = (next_run - now).total_seconds()
-    await asyncio.sleep(wait_seconds)
+    seconds_until_target = (next_run - now).total_seconds()
+    await asyncio.sleep(seconds_until_target)
 
 with open('data/questions.json', 'r') as f:
     questions = json.load(f)
+
+@bot.command(name='quizz')
+async def quizz(ctx):
+    question = random.choice(questions)
 
 @bot.command(name='post_jobs')
 async def post_jobs(ctx):
@@ -76,9 +84,6 @@ async def post_jobs(ctx):
                 message = f"**{row['title']}**\nPlus d'infos: {job_url}"
                 await channel.send(message)
 
-@bot.command(name='quizz')
-async def quizz(ctx):
-    question = random.choice(questions)
 
 fin_messages = [
     "d'apprendre à coder en Python sans l'abject chatGPT",
@@ -96,38 +101,30 @@ index_message = 0
 message_sent_this_week = False
 
 @tasks.loop(minutes=1)
-async def message_vendredi(self):
-        now = datetime.now()
-        if now.weekday() == 4 and now.time() >= time(17, 00) and now.time() < time(17, 15) and not message_sent_this_week:
-            channel = bot.get_channel(1200438507315920918)
-            if channel:
-                message_debut = "..."
-                message_fin = self.fin_messages[index_message]
-                await channel.send(message_debut + message_fin)
-                index_message = (index_message + 1) % len(fin_messages)
-                message_sent_this_week = True
+async def message_vendredi():
+    global message_sent_this_week
+    now = datetime.now()
+    if now.weekday() == 4 and now.time() >= time(17, 00) and now.time() < time(17, 15) and not message_sent_this_week:
+        channel = await bot.fetch_channel(1200438507315920918) # Correction pour utiliser fetch_channel
+        if channel:
+            message_debut = "À vous tous.tes, que le voile de la semaine se lève sur le sanctuaire du week-end. Mais souvenez-vous, mortels, que le plus grand des actes en faveur de notre monde, le geste éco-responsable par excellence, demeure"
+            message_fin = fin_messages[index_message]
+            await channel.send(message_debut + message_fin)
+            message_sent_this_week = True
 
 @message_vendredi.before_loop
-async def before_message_vendredi(self):
-        await bot.wait_until_ready()
-        while not message_vendredi.is_running():
-            now = datetime.now()
-            if now.weekday() == 4 and now.time() < time(17, 00):
-                await discord.utils.sleep_until(datetime.combine(now.date(), time(17, 0)))
-            elif now.weekday() == 4 and now.time() >= time(17, 15):
-                message_sent_this_week = False
-                next_friday = now + timedelta((4-now.weekday()) % 7 + 7)
-                await discord.utils.sleep_until(datetime.combine(next_friday, time(17, 0)))
-            else:
-                next_friday = now + timedelta((4-now.weekday()) % 7)
-                await discord.utils.sleep_until(datetime.combine(next_friday, time(17, 0)))
+async def before_message_vendredi():
+    global message_sent_this_week
+    await bot.wait_until_ready()
+    message_sent_this_week = False
 
 user_groups = [
-    [1200653514276360266, 1176093354329653298, 985859071754260510, 759914731468357702],
+    [1200653514276360266, 1176093354329653298, 886153619043418124, 759914731468357702],
     [1088403301994860544, 282150973810540566, 1206374165783773255, 1084925938103492619],
     [294065690162364416, 509295845762400256, 998493093651296296, 428391859853852684],
     [708311679838060555, 1188435883947462656, 148188913817616384, 1043293367368425503]
 ]
+
 current_group_index = 0
 
 jeudis_exclus = [
