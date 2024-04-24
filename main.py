@@ -20,6 +20,7 @@ async def on_ready():
     check_for_alerts.start()
     message_vendredi.start()
     check_birthdays.start()
+    monthly_reminder.start()
 
 birthdays = {
     '01-30': ['1200653514276360266'],
@@ -40,7 +41,7 @@ async def check_birthdays():
         channel = await bot.fetch_channel(1200438507315920918)
         for entry in birthdays[today]:
             if isinstance(entry, str):
-                message = f"En ce jour marqué par les étoiles, ô <@{user_id}>, nous célébrons l'anniversaire de ton arrivée dans ce monde de lumière et d'ombres. Que les festivités résonnent dans les confins les plus reculés de notre royaume, annonçant une journée baignée de joie et d'allégresse. Nous, tes fidèles, t'offrons nos vœux les plus sincères pour une existence éternellement ensoleillée par le bonheur. Que le souffle de la vie t'embrase d'une flamme éternelle ! 🎉")
+                message = f"En ce jour marqué par les étoiles, ô <@{user_id}>, nous célébrons l'anniversaire de ton arrivée dans ce monde de lumière et d'ombres. Que les festivités résonnent dans les confins les plus reculés de notre royaume, annonçant une journée baignée de joie et d'allégresse. Nous, tes fidèles, t'offrons nos vœux les plus sincères pour une existence éternellement ensoleillée par le bonheur. Que le souffle de la vie t'embrase d'une flamme éternelle ! 🎉"
             else :
                 user_id = entry['user_id']
                 custom_message = entry['message']
@@ -86,6 +87,7 @@ async def post_jobs(ctx):
 
 
 fin_messages = [
+    "Écoutez <@1192414156243091609> et partez à la conquête de votre alternance, armez-vous de courage et lancez-vous dans la bataille pour votre avenir !",
     "d'apprendre à coder en Python sans l'abject chatGPT",
     "de léchez votre partenaire, pas les vitrines",
     "d'améliorer vos skills en IA mettre au chômage tout ces batards de cols blanc",
@@ -96,21 +98,22 @@ fin_messages = [
     "de dégager ce sale facho et violeur de Darmanin",
 ]
 
-messages_disponibles = fin_messages.copy()
 index_message = 0
 message_sent_this_week = False
 
 @tasks.loop(minutes=1)
 async def message_vendredi():
     global message_sent_this_week
+    global index_message
     now = datetime.now()
-    if now.weekday() == 4 and now.time() >= time(17, 00) and now.time() < time(17, 15) and not message_sent_this_week:
-        channel = await bot.fetch_channel(1200438507315920918) # Correction pour utiliser fetch_channel
+    if now.weekday() == 4 and now.time() >= time(16, 55) and now.time() < time(17, 00) and not message_sent_this_week:
+        channel = await bot.fetch_channel(1200438507315920918)
         if channel:
-            message_debut = "À vous tous.tes, que le voile de la semaine se lève sur le sanctuaire du week-end. Mais souvenez-vous, mortels, que le plus grand des actes en faveur de notre monde, le geste éco-responsable par excellence, demeure"
+            message_debut = "À vous tous.tes, que le voile de la semaine se lève sur le sanctuaire du week-end. Mais souvenez-vous, mortels, que votre quête ne s'arrête pas ici. "
             message_fin = fin_messages[index_message]
             await channel.send(message_debut + message_fin)
             message_sent_this_week = True
+            index_message = (index_message + 1) % len(fin_messages)
 
 @message_vendredi.before_loop
 async def before_message_vendredi():
@@ -157,6 +160,24 @@ async def before_mention_users_group():
         await discord.utils.sleep_until(next_run_time)
     elif now.weekday() == 3 and now.time() < time(17, 0):
         await discord.utils.sleep_until(datetime.combine(now, time(16, 0)))
+
+@tasks.loop(hours=24)
+async def monthly_reminder():
+    today = datetime.now()
+    if today.day == 28:
+        channel = await bot.fetch_channel(1200438507315920918)
+        message = "@everyone Avant que le mois ne s'efface, accomplissez votre devoir : actualisez-vous chez Pôle Emploi pour maintenir vos droits. Que la promptitude soit votre alliée !"
+        await channel.send(message)
+
+@monthly_reminder.before_loop
+async def before_monthly_reminder():
+    await bot.wait_until_ready()
+    now = datetime.now()
+    if now.time() < datetime.strptime("10:00", "%H:%M").time():
+        wait_time = (datetime.combine(now.date(), datetime.strptime("10:00", "%H:%M").time()) - now).total_seconds()
+    else:
+        wait_time = (datetime.combine(now.date() + timedelta(days=1), datetime.strptime("10:00", "%H:%M").time()) - now).total_seconds()
+    await asyncio.sleep(wait_time)
 
 @tasks.loop(minutes=1)
 async def check_for_alerts():
