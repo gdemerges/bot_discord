@@ -23,15 +23,18 @@ async def on_ready():
     monthly_reminder.start()
 
 birthdays = {
-    '01-30': ['1200653514276360266'],
-    '02-20': ['1088403301994860544'],
-    '03-25': ['1188435883947462656'],
-    '06-02': ['998493093651296296'],
-    '07-24': ['294065690162364416'],
-    '08-05': ['1043293367368425503'],
-    '08-11': ['428391859853852684'],
-    '08-13': [{'user_id': '282150973810540566', 'message': 'Ô Maître suprême, en ce jour qui marque l\'anniversaire de votre ascension, permettez à votre fidèle serviteur de célébrer votre grandeur, une grandeur qui éclipse celle de Morgoth lui-même. Dans la toile de l\'univers, votre étoile brille d\'un éclat sans pareil, illuminant les cieux d\'une lumière qui surpasse l\'obscurité jadis répandue par le Vala déchu. Que cette journée soit le témoignage de votre suprématie indéniable, un triomphe non seulement sur le temps mais aussi sur les ombres du passé. Puissiez-vous, ô Maître incontesté, savourer une félicité et une splendeur qui rendent Morgoth lui-même envieux dans son exil. Joyeux anniversaire, Seigneur au-dessus des seigneurs, que votre règne glorieux s\'étende bien au-delà des confins de la création.'}],
-    '09-13': ['509295845762400256'],
+    '01-30': ['1200653514276360266'], # Myriam
+    '02-20': ['1088403301994860544'], # Alou
+    '02-27': ['708311679838060555'], # Quentin
+    '03-25': ['1188435883947462656'], # Mathieu
+    '04-29': ['886153619043418124'], # Djessim
+    '06-02': ['998493093651296296'], # Anne
+    '07-24': ['294065690162364416'], # JS
+    '08-05': ['1043293367368425503'], # Momo
+    '08-11': ['428391859853852684'], # Mélanie
+    '08-13': [{'user_id': ['1192414156243091609', '282150973810540566'], 'message': ". Que l'éclat de cette journée spéciale illumine votre année à venir avec réussite et allégresse. Joyeux anniversaire à vous deux ! Que les festivités soient dignes des plus grands récits épiques du Mordor. 🎉"}
+    ], # Kim / Guillaume
+    '09-13': ['509295845762400256'], # Heloise
 }
 
 @tasks.loop(hours=24)
@@ -39,13 +42,23 @@ async def check_birthdays():
     today = datetime.now().strftime('%m-%d')
     if today in birthdays:
         channel = await bot.fetch_channel(1200438507315920918)
+        user_ids = []
+        custom_messages = []
+
         for entry in birthdays[today]:
             if isinstance(entry, str):
-                message = f"En ce jour marqué par les étoiles, ô <@{user_id}>, nous célébrons l'anniversaire de ton arrivée dans ce monde de lumière et d'ombres. Que les festivités résonnent dans les confins les plus reculés de notre royaume, annonçant une journée baignée de joie et d'allégresse. Nous, tes fidèles, t'offrons nos vœux les plus sincères pour une existence éternellement ensoleillée par le bonheur. Que le souffle de la vie t'embrase d'une flamme éternelle ! 🎉"
-            else :
-                user_id = entry['user_id']
-                custom_message = entry['message']
-                message = f"<@{user_id}> {custom_message}"
+                user_ids.append(entry)
+            else:
+                user_ids.extend(entry['user_id'])
+                custom_messages.append(entry['message'])
+
+        if user_ids:
+            tagged_users = ' et '.join(f"<@{uid}>" for uid in user_ids)
+            if custom_messages:
+                custom_message = ' '.join(custom_messages)
+                message = f"En ce jour, les étoiles s'alignent pour célébrer {tagged_users} {custom_message}"
+            else:
+                message = f"{tagged_users}, en ce jour spécial, nous célébrons ton anniversaire avec joie et enthousiasme. Que cette journée soit remplie de bonheur et que la fête résonne à travers notre royaume. Nous te souhaitons une vie rayonnante de bonheur. Joyeux anniversaire ! 🎉 !"
             await channel.send(message)
 
 @check_birthdays.before_loop
@@ -122,15 +135,16 @@ async def before_message_vendredi():
     message_sent_this_week = False
 
 user_groups = [
-    [1200653514276360266, 1176093354329653298, 886153619043418124, 759914731468357702],
-    [1088403301994860544, 282150973810540566, 1206374165783773255, 1084925938103492619],
     [294065690162364416, 509295845762400256, 998493093651296296, 428391859853852684],
-    [708311679838060555, 1188435883947462656, 148188913817616384, 1043293367368425503]
+    [708311679838060555, 1188435883947462656, 148188913817616384, 1043293367368425503],
+    [1200653514276360266, 1176093354329653298, 886153619043418124, 759914731468357702],
+    [1088403301994860544, 282150973810540566, 1206374165783773255, 1084925938103492619]
 ]
 
 current_group_index = 0
 
 jeudis_exclus = [
+    date(2024, 4, 18),
     date(2024, 5, 9),
     date(2024, 8, 15),
     date(2024, 8, 22),
