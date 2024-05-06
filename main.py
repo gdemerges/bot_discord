@@ -98,9 +98,12 @@ async def post_jobs(ctx):
                 message = f"**{row['title']}**\nPlus d'infos: {job_url}"
                 await channel.send(message)
 
+vendredis_exclu = [
+    date(2024, 5, 10),
+    date(2024, 8, 16)
+]
 
 fin_messages = [
-    "Écoutez <@1192414156243091609> et partez à la conquête de votre alternance, armez-vous de courage et lancez-vous dans la bataille pour votre avenir !",
     "d'apprendre à coder en Python sans l'abject chatGPT",
     "de léchez votre partenaire, pas les vitrines",
     "d'améliorer vos skills en IA mettre au chômage tout ces batards de cols blanc",
@@ -119,7 +122,7 @@ async def message_vendredi():
     global message_sent_this_week
     global index_message
     now = datetime.now()
-    if now.weekday() == 4 and now.time() >= time(16, 55) and now.time() < time(17, 00) and not message_sent_this_week:
+    if now.weekday() == 4 and now.time() >= time(16, 55) and now.time() < time(17, 00) and not message_sent_this_week and now.date() not in vendredis_exclu:
         channel = await bot.fetch_channel(1200438507315920918)
         if channel:
             message_debut = "À vous tous.tes, que le voile de la semaine se lève sur le sanctuaire du week-end. Mais souvenez-vous, mortels, que votre quête ne s'arrête pas ici. "
