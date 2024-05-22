@@ -13,14 +13,84 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+morning_message_sent = False
+afternoon_message_sent = False
+
+excluded_dates = [
+    date(2024, 8, 12),
+    date(2024, 8, 13),
+    date(2024, 8, 14),
+    date(2024, 8, 15),
+    date(2024, 8, 16),
+    date(2024, 8, 17),
+    date(2024, 8, 18),
+    date(2024, 8, 19),
+    date(2024, 8, 20),
+    date(2024, 8, 21),
+    date(2024, 8, 22),
+    date(2024, 8, 23)
+]
+
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} a démarré.')
     mention_users_group.start()
     check_for_alerts.start()
-    message_vendredi.start()
+    #message_vendredi.start()
     check_birthdays.start()
     monthly_reminder.start()
+    check_messages_morning.start()
+    check_messages_afternoon.start()
+
+async def check_messages(start_time, end_time, period):
+    global morning_message_sent, afternoon_message_sent
+
+    channel = bot.get_channel(1206906418226266122)
+    now = datetime.utcnow()
+
+    messages = await channel.history(after=start_time, before=now).flatten()
+
+    if not messages:
+        await channel.send("Envoyez immédiatement le lien pour signature et fortifiez ainsi notre pacte. Que cet acte rapide renforce notre grand dessein. Agissez sans délai !")
+        if period == "morning":
+            morning_message_sent = True
+        elif period == "afternoon":
+            afternoon_message_sent = True
+
+@tasks.loop(minutes=1)
+async def check_messages_morning():
+    global morning_message_sent
+    now = datetime.now().date()
+    current_time = datetime.now().time()
+    if now.weekday() < 5 and now not in excluded_dates:
+        if current_time.hour == 12 and current_time.minute == 0 and not morning_message_sent:
+            start_time = datetime.combine(now, time(9, 0))
+            end_time = datetime.combine(now, time(12, 0))
+            await check_messages(start_time, end_time, "morning")
+        elif current_time.hour == 12 and current_time.minute > 0:
+            morning_message_sent = False
+
+@tasks.loop(minutes=1)
+async def check_messages_afternoon():
+    global afternoon_message_sent
+    now = datetime.now().date()
+    current_time = datetime.now().time()
+    if now.weekday() < 5 and now not in excluded_dates:
+        if current_time.hour == 16 and current_time.minute == 0 and not afternoon_message_sent:
+            start_time = datetime.combine(now, time(13, 0))
+            end_time = datetime.combine(now, time(16, 0))
+            await check_messages(start_time, end_time, "afternoon")
+        elif current_time.hour == 16 and current_time.minute > 0:
+            afternoon_message_sent = False
+
+@check_messages_morning.before_loop
+async def before_check_messages_morning():
+    await bot.wait_until_ready()
+
+@check_messages_afternoon.before_loop
+async def before_check_messages_afternoon():
+    await bot.wait_until_ready()
+
 
 birthdays = {
     '01-30': ['1200653514276360266'], # Myriam
@@ -102,7 +172,7 @@ vendredis_exclu = [
     date(2024, 5, 10),
     date(2024, 8, 16)
 ]
-
+"""
 fin_messages = [
     "d'apprendre à coder en Python sans l'abject chatGPT",
     "de léchez votre partenaire, pas les vitrines",
@@ -136,6 +206,7 @@ async def before_message_vendredi():
     global message_sent_this_week
     await bot.wait_until_ready()
     message_sent_this_week = False
+"""
 
 user_groups = [
     [294065690162364416, 509295845762400256, 998493093651296296, 428391859853852684],
