@@ -41,6 +41,16 @@ async def on_ready():
     monthly_reminder.start()
     check_messages_morning.start()
     check_messages_afternoon.start()
+    schedule_election_reminder.start()
+
+@tasks.loop(minutes=1)
+async def schedule_election_reminder():
+    now = datetime.now()
+    election_reminder_date = datetime(2024, 6, 7, 14, 0)  # 7 juin 2024 à 14h00
+    if now >= election_reminder_date:
+        channel = bot.get_channel(1200438507315920918)
+        await channel.send("@everyone Ô peuples de cette vaste contrée, l'heure solennelle du choix approche avec les élections européennes. Que chacun de vous prenne les armes de la démocratie et marche vers les urnes. Pour faire écho à l'appel de notre camarade <@205740195914579969>, considérez de porter votre voix vers La France Insoumise, pour que leurs idéaux résonnent au cœur des débats européens. Que votre vote forge l'avenir de notre continent. Levez-vous, citoyens, et faites entendre votre voix !")
+        schedule_election_reminder.stop()
 
 async def check_messages(start_time, end_time, period):
     global morning_message_sent, afternoon_message_sent
@@ -89,6 +99,10 @@ async def before_check_messages_morning():
 
 @check_messages_afternoon.before_loop
 async def before_check_messages_afternoon():
+    await bot.wait_until_ready()
+
+@schedule_election_reminder.before_loop
+async def before_schedule_election_reminder():
     await bot.wait_until_ready()
 
 
