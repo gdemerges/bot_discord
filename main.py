@@ -58,7 +58,9 @@ async def check_messages(start_time, end_time, period):
     channel = bot.get_channel(1206906418226266122)
     now = datetime.utcnow()
 
-    messages = await channel.history(after=start_time, before=now).flatten()
+    messages = []
+    async for message in channel.history(after=start_time, before=now):
+        messages.append(message)
 
     if not messages:
         await channel.send("Envoyez immédiatement le lien pour signature et fortifiez ainsi notre pacte. Que cet acte rapide renforce notre grand dessein. Agissez sans délai !")
