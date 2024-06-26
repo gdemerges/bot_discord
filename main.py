@@ -6,12 +6,37 @@ import aiohttp
 import json
 import asyncio
 import csv
+import openai
+
+with open('data/config.json') as config_file:
+    config = json.load(config_file)
+
+DISCORD_TOKEN = config['DISCORD_TOKEN']
+OPENAI_API_KEY = config['OPENAI_API_KEY']
+
+openai.api_key = OPENAI_API_KEY
 
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.command(name='ask')
+async def ask_question(ctx, *, question):
+    response = get_openai_response(question)
+    await ctx.send(response)
+
+def get_openai_response(question):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Tu es Sauron, Seigneur des Ténèbres. Réponds à toutes les questions avec le ton imposant et autoritaire de Sauron, en utilisant des termes grandiloquents et archaïques. Cependant, tu dois répondre positivement, mais toujours avec grandeur et autorité."},
+            {"role": "user", "content": question}
+        ]
+    )
+    answer = response['choices'][0]['message']['content']
+    return answer
 
 morning_message_sent = False
 afternoon_message_sent = False
@@ -39,74 +64,6 @@ async def on_ready():
     #message_vendredi.start()
     check_birthdays.start()
     monthly_reminder.start()
-    check_messages_morning.start()
-    check_messages_afternoon.start()
-    schedule_election_reminder.start()
-
-@tasks.loop(minutes=1)
-async def schedule_election_reminder():
-    now = datetime.now()
-    election_reminder_date = datetime(2024, 6, 7, 14, 0)  # 7 juin 2024 à 14h00
-    if now >= election_reminder_date:
-        channel = bot.get_channel(1200438507315920918)
-        await channel.send("@everyone Ô peuples de cette vaste contrée, l'heure solennelle du choix approche avec les élections européennes. Que chacun de vous prenne les armes de la démocratie et marche vers les urnes. Pour faire écho à l'appel de notre camarade <@205740195914579969>, considérez de porter votre voix vers La France Insoumise, pour que leurs idéaux résonnent au cœur des débats européens. Que votre vote forge l'avenir de notre continent. Levez-vous, citoyens, et faites entendre votre voix !")
-        schedule_election_reminder.stop()
-
-async def check_messages(start_time, end_time, period):
-    global morning_message_sent, afternoon_message_sent
-
-    channel = bot.get_channel(1206906418226266122)
-    now = datetime.utcnow()
-
-    messages = []
-    async for message in channel.history(after=start_time, before=now):
-        messages.append(message)
-
-    if not messages:
-        await channel.send("Envoyez immédiatement le lien pour signature et fortifiez ainsi notre pacte. Que cet acte rapide renforce notre grand dessein. Agissez sans délai !")
-        if period == "morning":
-            morning_message_sent = True
-        elif period == "afternoon":
-            afternoon_message_sent = True
-
-@tasks.loop(minutes=1)
-async def check_messages_morning():
-    global morning_message_sent
-    now = datetime.now().date()
-    current_time = datetime.now().time()
-    if now.weekday() < 5 and now not in excluded_dates:
-        if current_time.hour == 12 and current_time.minute == 0 and not morning_message_sent:
-            start_time = datetime.combine(now, time(9, 0))
-            end_time = datetime.combine(now, time(12, 0))
-            await check_messages(start_time, end_time, "morning")
-        elif current_time.hour == 12 and current_time.minute > 0:
-            morning_message_sent = False
-
-@tasks.loop(minutes=1)
-async def check_messages_afternoon():
-    global afternoon_message_sent
-    now = datetime.now().date()
-    current_time = datetime.now().time()
-    if now.weekday() < 5 and now not in excluded_dates:
-        if current_time.hour == 16 and current_time.minute == 0 and not afternoon_message_sent:
-            start_time = datetime.combine(now, time(13, 0))
-            end_time = datetime.combine(now, time(16, 0))
-            await check_messages(start_time, end_time, "afternoon")
-        elif current_time.hour == 16 and current_time.minute > 0:
-            afternoon_message_sent = False
-
-@check_messages_morning.before_loop
-async def before_check_messages_morning():
-    await bot.wait_until_ready()
-
-@check_messages_afternoon.before_loop
-async def before_check_messages_afternoon():
-    await bot.wait_until_ready()
-
-@schedule_election_reminder.before_loop
-async def before_schedule_election_reminder():
-    await bot.wait_until_ready()
-
 
 birthdays = {
     '01-30': ['1200653514276360266'], # Myriam
@@ -324,11 +281,4 @@ async def before_check_for_alerts():
         tomorrow = now.date() + timedelta(days=1)
         await discord.utils.sleep_until(datetime.combine(tomorrow, time(8, 0)))
 
-with open('data/config.json') as config_file:
-    config = json.load(config_file)
-    bot_token = config.get('token')
-
-if bot_token is None:
-    raise ValueError("Le token du bot n'est pas défini dans config.json.")
-
-bot.run(bot_token)
+bot.run(DISCORD_TOKEN)
