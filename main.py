@@ -166,21 +166,19 @@ async def on_message(message):
     # Toujours traiter les commandes après avoir réagi
     await bot.process_commands(message)
 
-"""
+
 @tasks.loop(minutes=1)
 async def send_evening_message():
     now = datetime.now()
     print(f"Vérification de l'heure: {now}")
     if now.hour == 10 and now.minute == 30:
         channel = bot.get_channel(1200438507315920918)
-        message = ("Mortels, Mercredi prochain, nul ne manquera à l'appel. Votre présence est requise, et aucune excuse ne sera tolérée. "
-                       "Ceux qui oseraient défier cet ordre seront confrontés à <@1192414156243091609>, et sachez que sa sanction sera aussi implacable que "
-                       "les flammes de la Montagne du Destin. Ne tentez pas le sort, ou vous subirez les conséquences. Vous êtes prévenus.")
+        message = ("")
         await channel.send(message)
         print("Message envoyé")
     else:
         print("Channel non trouvé")
-"""
+
 
 async def get_reactions_for_message(message):
     reactions_data = []
@@ -324,7 +322,7 @@ user_groups = [
     [861540082262605826, 714403161346932823, 1192414156243091609]
 ]
 
-current_group_index = 3
+current_group_index = 0
 
 jeudis_exclus = [
     date(2024, 4, 18),
