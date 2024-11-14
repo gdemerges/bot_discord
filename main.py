@@ -324,41 +324,43 @@ user_groups = [
 
 current_group_index = 0
 
-jeudis_exclus = [
-    date(2024, 4, 18),
-    date(2024, 5, 9),
-    date(2024, 6, 13),
-    date(2024, 8, 15),
-    date(2024, 8, 22),
+mention_dates = [
+    "05/12", "19/12", "16/01", "13/02", "13/03",
+    "10/04", "15/05", "05/06", "03/07", "28/08"
 ]
 
 @tasks.loop(minutes=10)
 async def mention_users_group():
-    global current_group_index
-    now = datetime.now()
-    today = datetime.now().date()
-    if now.weekday() == 3 and today not in jeudis_exclus:
+    today = datetime.now().strftime("%d/%m")
+
+    if today in mention_dates:
+        current_group_index = mention_dates.index(today)
         channel = bot.get_channel(1200438507315920918)
+
         if channel:
-            if now.time() >= time(16, 20) and now.time() < time(16, 30):
+            now = datetime.now().time()
+            if time(16, 20) <= now < time(16, 30):
                 mentions = " ".join([f'<@{user_id}>' for user_id in user_groups[current_group_index]])
                 await channel.send(
                     f"{mentions}, unissez vos efforts pour transformer nos espaces en havres de propreté et d'ordre."
                 )
-                current_group_index = (current_group_index + 1) % len(user_groups)
 
 
 @mention_users_group.before_loop
 async def before_mention_users_group():
     await bot.wait_until_ready()
     now = datetime.now()
-    if now.weekday() < 3 or (now.weekday() == 3 and now.time() > time(17, 0)):
-        days_until_thursday = (3 - now.weekday()) % 7
-        next_run = now + timedelta(days=days_until_thursday)
-        next_run_time = datetime.combine(next_run, time(15, 0))
-        await discord.utils.sleep_until(next_run_time)
-    elif now.weekday() == 3 and now.time() < time(17, 0):
-        await discord.utils.sleep_until(datetime.combine(now, time(15, 0)))
+
+    while True:
+        today_str = now.strftime("%d/%m")
+        if today_str in mention_dates:
+            next_run_time = datetime.combine(now.date(), time(16, 20))
+            if now.time() > time(16, 30):
+                now += timedelta(days=1)
+            await discord.utils.sleep_until(next_run_time)
+            break
+        else:
+            now += timedelta(days=1)
 
 @tasks.loop(hours=24)
 async def monthly_reminder():
