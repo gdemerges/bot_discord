@@ -139,7 +139,7 @@ async def on_ready():
     mention_users_group.start()
     #message_vendredi.start()
     check_birthdays.start()
-    monthly_reminder.start()
+    #monthly_reminder.start()
     auto_get_all_messages.start()
     #send_evening_message.start()
 
