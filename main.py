@@ -5,12 +5,10 @@ import json
 import requests
 import openai
 import asyncio
+import os
 
-with open('data/config.json') as config_file:
-    config = json.load(config_file)
-
-DISCORD_TOKEN = config['DISCORD_TOKEN']
-OPENAI_API_KEY = config['OPENAI_API_KEY']
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -69,10 +67,6 @@ user_reactions = {
     1088403301994860544: '🥐'
 }
 
-target_bot_id = 159985870458322944
-target_user_id = 708311679838060555
-lol_user_id = 294065690162364416
-
 def load_calendar_from_json():
     with open('calendar.json', 'r') as file:
         return json.load(file)
@@ -102,16 +96,6 @@ def generate_birthday_summary():
 
     return "\n".join(upcoming_birthdays) if upcoming_birthdays else "Aucun anniversaire à venir."
 
-
-def get_openai_response(question, calendar_summary, birthday_summary):
-    response = client.chat.completions.create(model="gpt-4",
-    messages=[
-        {"role": "system", "content": "Tu es Sauron, Seigneur des Ténèbres. Réponds à toutes les questions avec le ton imposant et autoritaire de Sauron, en utilisant des termes grandiloquents et archaïques. Cependant, formate tes réponses pour être claires et lisibles, avec des paragraphes et des sauts de ligne si nécessaire. Tu écriras des messages relativement bref."},
-        {"role": "user", "content": f"Voici le calendrier des événements à venir :\n{calendar_summary}\n\nEt voici les anniversaires à venir :\n{birthday_summary}\n\nQuestion : {question}"}
-    ])
-    answer = response.choices[0].message.content
-    return answer
-
 API_URL = "https://apibot-1308-eefsbmbwgmbdfafd.francecentral-01.azurewebsites.net/analyze"
 
 @bot.command(name='sauron')
@@ -127,6 +111,42 @@ async def ask_question(ctx, *, question):
         answer = "Une erreur est survenue lors de la communication avec mon esprit ténébreux."
 
     await ctx.send(answer)
+    
+
+async def fetch_messages(channel):
+    today = datetime.datetime.utcnow().date()
+    messages = []
+
+    async for message in channel.history(limit=100):
+        if message.created_at.date() == today:
+            messages.append(message.content)
+
+    return messages
+
+@bot.command(name="resume")
+async def summarize_messages(ctx):
+    messages_text = []
+    
+    for channel_id in [1200438507315920918, 1206906150583541791]: 
+        channel = bot.get_channel(channel_id)
+        if channel:
+            messages_text.extend(await fetch_messages(channel))
+
+    if not messages_text:
+        await ctx.send("Aucun message à résumer aujourd'hui.")
+        return
+
+    full_text = "\n".join(messages_text)
+
+    try:
+        response = requests.post(API_URL, json={"text": f"Fais un résumé de ces messages : {full_text}"}, timeout=10)
+        response.raise_for_status()
+        summary = response.json().get("response", "Impossible de générer un résumé.")
+    except Exception as e:
+        print(f"Erreur API : {e}")
+        summary = "Je n'ai pas pu générer le résumé."
+
+    await ctx.send(f"📜 **Résumé du jour :**\n{summary}")
 
 @bot.command(name='ping')
 async def ping(ctx):
@@ -144,7 +164,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # Ne pas répondre à ses propres messages
     if message.author == bot.user:
         return
     
@@ -225,13 +244,12 @@ async def auto_get_all_messages():
     global first_run
     all_messages = []
 
-    # Si c'est la première exécution, récupérer tout l'historique des messages
     if first_run:
         print("Première exécution - récupération de tout l'historique des messages.")
         first_run = False
-        last_24_hours = None  # Aucune limite de temps, récupérer tout
+        last_24_hours = None  
     else:
-        last_24_hours = datetime.utcnow() - timedelta(hours=24)  # Récupérer les messages des dernières 24 heures
+        last_24_hours = datetime.utcnow() - timedelta(hours=24) 
 
     for channel in bot.get_all_channels():
         if isinstance(channel, discord.TextChannel):
@@ -255,7 +273,6 @@ async def auto_get_all_messages():
 async def before_auto_get_all_messages():
     await bot.wait_until_ready()
 
-# Commande pour manuellement récupérer les messages de tous les canaux texte
 @bot.command()
 async def get_all_messages(ctx, limit: int = 100):
     all_messages = []
