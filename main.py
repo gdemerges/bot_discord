@@ -1,19 +1,18 @@
 import discord
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta, time, date
-import random
-import aiohttp
 import json
+import requests
+from openai import OpenAI
 import asyncio
-import csv
-import openai
 
 with open('data/config.json') as config_file:
     config = json.load(config_file)
 
 DISCORD_TOKEN = config['DISCORD_TOKEN']
 OPENAI_API_KEY = config['OPENAI_API_KEY']
-openai.api_key = OPENAI_API_KEY
+
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -89,7 +88,7 @@ def generate_calendar_summary(calendar):
     return summary if summary else "Aucun événement futur dans le calendrier."
 
 def generate_birthday_summary():
-    today = datetime.now().strftime('%m-%d')  # Format: MM-DD
+    today = datetime.now().strftime('%m-%d') 
     upcoming_birthdays = []
 
     for date, users in birthdays.items():
@@ -105,29 +104,29 @@ def generate_birthday_summary():
 
 
 def get_openai_response(question, calendar_summary, birthday_summary):
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Tu es Sauron, Seigneur des Ténèbres. Réponds à toutes les questions avec le ton imposant et autoritaire de Sauron, en utilisant des termes grandiloquents et archaïques. Cependant, formate tes réponses pour être claires et lisibles, avec des paragraphes et des sauts de ligne si nécessaire. Tu écriras des messages relativement bref."},
-            {"role": "user", "content": f"Voici le calendrier des événements à venir :\n{calendar_summary}\n\nEt voici les anniversaires à venir :\n{birthday_summary}\n\nQuestion : {question}"}
-        ]
-    )
-    answer = response['choices'][0]['message']['content']
+    response = client.chat.completions.create(model="gpt-4",
+    messages=[
+        {"role": "system", "content": "Tu es Sauron, Seigneur des Ténèbres. Réponds à toutes les questions avec le ton imposant et autoritaire de Sauron, en utilisant des termes grandiloquents et archaïques. Cependant, formate tes réponses pour être claires et lisibles, avec des paragraphes et des sauts de ligne si nécessaire. Tu écriras des messages relativement bref."},
+        {"role": "user", "content": f"Voici le calendrier des événements à venir :\n{calendar_summary}\n\nEt voici les anniversaires à venir :\n{birthday_summary}\n\nQuestion : {question}"}
+    ])
+    answer = response.choices[0].message.content
     return answer
+
+API_URL = "http://127.0.0.1:8000/analyze"
 
 @bot.command(name='sauron')
 async def ask_question(ctx, *, question):
     print(f"Question reçue : {question}")
 
-    calendar = load_calendar_from_json()
+    try:
+        response = requests.post(API_URL, json={"text": question})
+        data = response.json()
+        answer = data.get("response", "Réponse non disponible.")
+    except Exception as e:
+        print(f"Erreur lors de la requête API : {e}")
+        answer = "Une erreur est survenue lors de la communication avec mon esprit ténébreux."
 
-    calendar_summary = generate_calendar_summary(calendar)
-
-    birthday_summary = generate_birthday_summary()
-
-    response = get_openai_response(question, calendar_summary, birthday_summary)
-
-    await ctx.send(response)
+    await ctx.send(answer)
 
 @bot.command(name='ping')
 async def ping(ctx):
@@ -136,11 +135,11 @@ async def ping(ctx):
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} a démarré.')
-    mention_users_group.start()
+    #mention_users_group.start()
     #message_vendredi.start()
-    check_birthdays.start()
+    #check_birthdays.start()
     #monthly_reminder.start()
-    auto_get_all_messages.start()
+    #auto_get_all_messages.start()
     #send_evening_message.start()
 
 @bot.event
@@ -148,22 +147,21 @@ async def on_message(message):
     # Ne pas répondre à ses propres messages
     if message.author == bot.user:
         return
+    
+    if isinstance(message.channel, discord.DMChannel):
+        print(f"Message privé reçu de {message.author}: {message.content}")
 
-    # Réaction automatique si l'auteur est dans `user_reactions`
-    if message.author.id in user_reactions:
-        reaction = user_reactions[message.author.id]
-        await message.add_reaction(reaction)
+        try:
+            response = requests.post(API_URL, json={"text": message.content})
+            data = response.json()
+            answer = data.get("response", "Réponse non disponible.")
+        except Exception as e:
+            print(f"Erreur lors de la requête API : {e}")
+            answer = "Une erreur est survenue lors de la communication avec mon esprit ténébreux."
 
-    # Vérifier si le message provient du bot cible
-    if message.author.id == target_bot_id:
-        response = get_openai_response(message.content)
-        await message.reply(response)
+        await message.channel.send(answer)
+        return
 
-    # Vérifier si l'auteur du message est l'utilisateur à qui envoyer "double lol"
-    elif message.author.id == lol_user_id:
-        await message.reply("double lol")
-
-    # Toujours traiter les commandes après avoir réagi
     await bot.process_commands(message)
 
 
