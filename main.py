@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 from datetime import datetime, timedelta, time, date
 import json
 import requests
-from openai import OpenAI
+import openai
 import asyncio
 
 with open('data/config.json') as config_file:
@@ -12,7 +12,7 @@ with open('data/config.json') as config_file:
 DISCORD_TOKEN = config['DISCORD_TOKEN']
 OPENAI_API_KEY = config['OPENAI_API_KEY']
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+openai.api_key = OPENAI_API_KEY
 
 intents = discord.Intents.default()
 intents.members = True
