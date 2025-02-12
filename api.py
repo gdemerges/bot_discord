@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 import json
+import uvicorn
 
 with open('data/config.json', 'r') as f:
     config = json.load(f)
@@ -21,3 +22,6 @@ async def analyze_text(request: RequestBody):
         return {"response": response.choices[0].message.content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

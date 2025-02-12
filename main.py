@@ -112,7 +112,7 @@ def get_openai_response(question, calendar_summary, birthday_summary):
     answer = response.choices[0].message.content
     return answer
 
-API_URL = "http://127.0.0.1:8000/analyze"
+API_URL = "https://apibot-1308-eefsbmbwgmbdfafd.francecentral-01.azurewebsites.net/analyze"
 
 @bot.command(name='sauron')
 async def ask_question(ctx, *, question):
