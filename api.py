@@ -12,6 +12,10 @@ app = FastAPI()
 
 class RequestBody(BaseModel):
     text: str
+    
+@app.get("/")
+def read_root():
+    return {"message": "API en ligne"}
 
 @app.post("/analyze")
 async def analyze_text(request: RequestBody):
