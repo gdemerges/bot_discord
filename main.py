@@ -97,6 +97,9 @@ def generate_birthday_summary():
     return "\n".join(upcoming_birthdays) if upcoming_birthdays else "Aucun anniversaire à venir."
 
 API_URL = "https://apibot-1308-eefsbmbwgmbdfafd.francecentral-01.azurewebsites.net/analyze"
+data = {"text": "Test"}
+response = requests.post(API_URL, json=data)
+print(response.json()) 
 
 @bot.command(name='sauron')
 async def ask_question(ctx, *, question):
@@ -112,7 +115,6 @@ async def ask_question(ctx, *, question):
 
     await ctx.send(answer)
     
-
 async def fetch_messages(channel):
     today = datetime.datetime.utcnow().date()
     messages = []
@@ -164,9 +166,11 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    print(f"Message reçu : {message.content} de {message.author} dans {message.channel}")
+
     if message.author == bot.user:
         return
-    
+
     if isinstance(message.channel, discord.DMChannel):
         print(f"Message privé reçu de {message.author}: {message.content}")
 
