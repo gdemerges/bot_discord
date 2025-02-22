@@ -4,7 +4,9 @@ import openai
 import uvicorn
 import os
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_DEPLOYMENT_NAME = os.getenv("AZURE_DEPLOYMENT_NAME")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -21,7 +23,7 @@ def read_root():
 async def analyze_text(request: RequestBody):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[{"role": "user", "content": request.text}]
         )
         return {"response": response["choices"][0]["message"]["content"]}

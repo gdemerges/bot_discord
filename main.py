@@ -8,9 +8,6 @@ import asyncio
 import os
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-openai.api_key = OPENAI_API_KEY
 
 intents = discord.Intents.default()
 intents.members = True
